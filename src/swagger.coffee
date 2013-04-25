@@ -457,11 +457,14 @@ class SwaggerOperation
     # Iterate over allowable params, interpolating the 'path' params into the url string.
     # Whatever's left over in the args object will become the query string
     for param in @parameters
-      if param.paramType == 'path'
+      if param.paramType == 'path' or param.paramType == 'path-raw'
         
         if args[param.name]
           reg = new RegExp '\{'+param.name+'[^\}]*\}', 'gi'
-          url = url.replace(reg, encodeURIComponent(args[param.name]))
+          if param.paramType == 'path-raw'
+            url = url.replace(reg, args[param.name])
+          else
+            url = url.replace(reg, encodeURIComponent(args[param.name]))
           delete args[param.name]
         else
           throw "#{param.name} is a required path param."
