@@ -1,165 +1,173 @@
-This is the Wordnik Swagger javascript client for use with [swagger](http://swagger.wordnik.com) enabled APIs.
-It's written in CoffeeScript and tested with Jasmine.
+# Swagger JavaScript library
 
-Find out more about the swagger project at [swagger.wordnik.com](http://swagger.wordnik.com), 
-and follow us on Twitter at [@swagger_doc](https://twitter.com/#!/swagger_doc).
+This is the Wordnik Swagger JavaScript client for use with [Swagger](http://swagger.io)-enabled APIs. It's written in CoffeeScript and tested with Jasmine, and is the fastest way to enable a JavaScript client to communicate with a Swagger-enabled server.
 
-## READ MORE about swagger!
+## What's Swagger?
 
-See the [swagger website](http://swagger.wordnik.com) or the [swagger-core wiki](https://github.com/wordnik/swagger-core/wiki), which contains information about the swagger json spec.
+The goal of Swagger™ is to define a standard, language-agnostic interface to REST APIs which allows both humans and computers to discover and understand the capabilities of the service without access to source code, documentation, or through network traffic inspection. When properly defined via Swagger, a consumer can understand and interact with the remote service with a minimal amount of implementation logic. Similar to what interfaces have done for lower-level programming, Swagger removes the guesswork in calling the service.
 
-### Usage
 
-Point swagger.js at a resource discovery file like
-[api.wordnik.com/v4/resources.json](http://api.wordnik.com/v4/resources.json)
-and it builds itself at runtime.
+Check out [Swagger-Spec](https://github.com/swagger-api/swagger-spec) for additional information about the Swagger project, including additional libraries with support for other languages and more.
+
+
+## Compatability
+The Swagger Specification has undergone 3 revisions since initial creation in 2010.  The swagger-js project has the following compatibilies with the Swagger specification:
+
+Swagger JS Version      | Release Date | Swagger Spec compatability | Notes
+----------------------- | ------------ | -------------------------- | -----
+2.1.0 (in development)  | n/a          |      2.0      | [branch develop_2.0](https://github.com/swagger-api/swagger-js/tree/develop_2.0)
+2.0.41                  | 2014-09-18   | 1.1, 1.2      | [tag v2.0.41](https://github.com/swagger-api/swagger-js/tree/v2.0.41)
+1.0.4                   | 2013-06-26   | 1.0, 1.1, 1.2 | [tag v1.0.4](https://github.com/swagger-api/swagger-js/tree/v1.0.4)
+
+### Calling an API with Swagger + Node.js!
+
+Install swagger-client:
+```
+npm install swagger-client
+```
+
+Then let Swagger do the work!
+```js
+var client = require("swagger-client")
+
+var swagger = new client.SwaggerApi({
+  url: 'http://petstore.swagger.wordnik.com/api/api-docs',
+  success: function() {
+    if(swagger.ready === true) {
+      swagger.apis.pet.getPetById({petId:1});
+    }
+  }
+});
+
+```
+
+That's it!  You'll get a JSON response with the default callback handler:
+
+```json
+{
+  "id": 1,
+  "category": {
+    "id": 2,
+    "name": "Cats"
+  },
+  "name": "Cat 1",
+  "photoUrls": [
+    "url1",
+    "url2"
+  ],
+  "tags": [
+    {
+      "id": 1,
+      "name": "tag1"
+    },
+    {
+      "id": 2,
+      "name": "tag2"
+    }
+  ],
+  "status": "available"
+}
+```
+
+Need to pass an API key?  Configure one as a querystring:
+
+```js
+client.authorizations.add("apiKey", new client.ApiKeyAuthorization("api_key","special-key","query"));
+```
+
+...or with a header:
+
+```js
+client.authorizations.add("apiKey", new client.ApiKeyAuthorization("api_key","special-key","header"));
+```
+
+### Calling an API with Swagger + the browser!
+
+Download `swagger.js` and `shred.bundle.js` into your lib folder
 
 ```html
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-<script type="text/javascript" src="https://raw.github.com/wordnik/swagger.js/master/lib/swagger.js"></script>
+<script src='lib/shred.bundle.js' type='text/javascript'></script>
+<script src='lib/swagger.js' type='text/javascript'></script>
 <script type="text/javascript">
-  $(function() { 
-    window.wordnik = new SwaggerApi({
-      discoveryUrl: "http://api.wordnik.com/v4/resources.json",
-      apiKey: "MY_API_KEY",
-      success: function() {
-        console.log('Shall we dance?');
+  // initialize swagger, point to a resource listing
+  window.swagger = new SwaggerApi({
+    url: "http://petstore.swagger.wordnik.com/api/api-docs",
+    success: function() {
+      if(swagger.ready === true) {
+        // upon connect, fetch a pet and set contents to element "mydata"
+        swagger.apis.pet.getPetById({petId:1}, function(data) {
+          document.getElementById("mydata").innerHTML = data.content.data;
+        });
       }
-    });
+    }
   });
 </script>
 ```
 
-### How it Works
+### Need to send an object to your API via POST or PUT?
+```js
+var body = {
+  id: 100,
+  name: "dog"
+};
 
-When initialized, the swagger.js client will build itself based on the (valid) swagger json files.  You
-initialize the client like such:
-
-```javascript
-wordnik = new SwaggerApi({
-  discoveryUrl: "http://api.wordnik.com/v4/resources.json",
-  api_key: 'YOUR_API_KEY', // Don't have a Wordnik API key? Get one at developer.wordnik.com
-  verbose: true,
-  success: function() { console.log("Your client is ready to swagger."); }
-});
+swagger.apis.pet.addPet({body: JSON.stringify(body)});
 ```
 
-After executing the above code you should see the success message in your console.
+### Sending XML in as a payload to your API?
+```js
+var body = "<Pet><id>2</id><name>monster</name></Pet>";
 
-### Object Hierarchy
-
-Now you have access to an object called `wordnik`.
-This object is what swagger.js builds at runtime when you
-point it at a `discoveryUrl`. Try exploring it in the console:
-
-```javascript
-wordnik
-wordnik.apis
-wordnik.apis.word.operations
-wordnik.apis.word.operations.getDefinition
+swagger.apis.pet.addPet({body: body},{requestContentType:"application/xml"});
 ```
 
-### Quick Reference
-
-You also get some console help() methods for quick reference. Some examples:
-
-```javascript
-// Apis
-wordnik.help()
-
-// Apis
-wordnik.resource.word.help()
-
-// Operations
-wordnik.apis.word.operations.getExamples.help()
-```
-### Making Requests
-
-There are two ways to make a request:
-
-```javascript
-// shorthand form
-wordnik.word.getDefinitions(args, callback);
-
-// longhand form
-wordnik.apis.word.operations.getDefinitions.do(args, callback);
-
-// example usage
-wordnik.word.getDefinitions({word: 'bliss'}, function(definitions) {
-  console.log(definitions);
-})
+### Need XML response?
+```js
+swagger.apis.pet.getPetById({petId:1},{responseContentType:"application/xml"});
 ```
 
-### Request Headers
+### Custom request signing
+You can easily write your own request signing code for Swagger.  For example:
 
-You can include your own headers in the args object:
+```js
+var CustomRequestSigner = function(name) {
+  this.name = name;
+};
 
-```javascript
-args = {word: 'swole', limit:5}
-args.headers = {magic: 'potion'}
-callback = function(examples) { console.log(examples); }
-wordnik.word.getExamples(args, callback);
+CustomRequestSigner.prototype.apply = function(obj, authorizations) {
+  var hashFunction = this._btoa;
+  var hash = hashFunction(obj.url);
+
+  obj.headers["signature"] = hash;
+  return true;
+};
 ```
 
-If you want to initialize the Request without actually firing 
-off a network request you can set a header called `mock` with any value.
+In the above simple example, we're creating a new request signer that simply base 64 encodes the URL.  Of course you'd do something more sophisticated, but after encoding it, a header called `signature` is set before sending the request.
 
-### Request Body
+### How does it work?
+The Swagger JavaScript client reads the Swagger api definition directly from the server.  As it does, it constructs a client based on the api definition, which means it is completely dynamic.  It even reads the api text descriptions (which are intended for humans!) and provides help if you need it:
 
-For GETs and POSTs, you can include the request body in the args object:
-
-```javascript
-args = {}
-args.body = {name: "gizmo", description: "A thing that does stuff."}
-callback = function(thing) { console.log(thing); }
-myApi.things.createThing(args, callback);
+```js
+s.apis.pet.getPetById.help()
+'* petId (required) - ID of pet that needs to be fetched'
 ```
 
-### Debugging / cURL
+The HTTP requests themselves are handled by the excellent [shred](https://github.com/automatthew/shred) library, which has a ton of features itself.  But it runs on both node and the browser.
 
-Set `verbose` to `true` when initializing your client to see cURL
-equivalents of your requests in the browser console, complete with headers:
-
-```javascript
-wordnik = new SwaggerApi({
-  api_key: 'YOUR_API_KEY',
-  verbose: true,
-  success: function() {
-    args = {
-      word: 'dog'
-      headers: {fubar: 'maybe'}
-    }
-    wordnik.word.getDefinitions.do(args, function(definitions){
-      console.log(definitions[0].word);
-      for (var i = 0; i < definitions.length; i++) {
-        var definition = definitions[i];
-        console.log(definition.partOfSpeech + ": " + definition.text);
-      }
-    });
-  }
-});
-
-// Console output:
-// curl --header "fubar: maybe" http://api.wordnik.com/v4/word.json/dog/definitions?api_key=YOUR_API_KEY
-// dog
-// noun: A domesticated carnivorous mammal (Canis familiaris) related to the foxes and wolves and raised in a wide variety of breeds.
-// noun: Any of various carnivorous mammals of the family Canidae, such as the dingo.
-// noun: A male animal of the family Canidae, especially of the fox or a domesticated breed.
-// etc...
-```
 
 Development
 -----------
 
-Please [fork the code](https://github.com/wordnik/swagger.js) and help us improve 
+Please [fork the code](https://github.com/swagger-api/swagger-js) and help us improve
 swagger.js. Send us a pull request and **we'll mail you a wordnik T-shirt!**
 
-Swagger.js is written in CoffeeScript, so you'll need Node.js and the 
-CoffeeScript compiler. For more detailed installation instructions, see 
+Swagger.js is written in CoffeeScript, so you'll need Node.js and the
+CoffeeScript compiler. For more detailed installation instructions, see
 [coffeescript.org/#installation](http://coffeescript.org/#installation).
 
 ```bash
-# generate the javascript libraries and put them in the `lib` folder
+# generate the JavaScript libraries and put them in the `lib` folder
 
 npm run-script build
 ```
@@ -179,11 +187,11 @@ cake
 License
 -------
 
-Copyright 2011-2013 Wordnik, Inc.
+Copyright 2011-2014 Reverb Technolgies, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
-You may obtain a copy of the License at 
+You may obtain a copy of the License at
 [apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 Unless required by applicable law or agreed to in writing, software
